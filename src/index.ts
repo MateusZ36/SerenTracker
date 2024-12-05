@@ -45,10 +45,12 @@ reader.readargs = {
 
 window.setTimeout(function () {
     //Find all visible chatboxes on screen
-    let findChat = setInterval(function () {
+    let findChat = setInterval(async function () {
         if (reader.pos === null) reader.find();
         else {
             clearInterval(findChat);
+            await updateGEPrices();
+            setInterval(updateGEPrices, 3 * 60 * 60 * 1000);
             reader.pos.boxes.map((box, i) => {
                 chatSelector.insertAdjacentHTML("beforeend", `<option value=${i}>Chat ${i}</option>`);
             });
@@ -86,6 +88,25 @@ window.setTimeout(function () {
         }
     }, 1000);
 }, 50);
+
+async function updateGEPrices() {
+    const ge_data = getSaveData("GE_DATA") || {};
+
+    if (ge_data["LAST_UPDATE"] && (new Date().getTime() - new Date(ge_data["LAST_UPDATE"]).getTime()) > 3600000) {
+        return
+    }
+
+    try {
+        const response = await fetch("https://runescape.wiki/?title=Module:GEPrices/data.json&action=raw&ctype=application%2Fjson");
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        updateSaveData({GE_DATA: data});
+    } catch (error) {
+        console.error("Failed to fetch GEPrices data:", error);
+    }
+}
 
 //Reading and parsing info from the chatbox.
 function readChatbox() {
@@ -184,6 +205,11 @@ function showItems() {
                 );
             });
     }
+}
+
+function getGEPrice(itemName: string): number {
+    const geData = getSaveData("GE_DATA");
+    return geData[itemName] || 0;
 }
 
 function checkAnnounce(getItem) {
@@ -332,7 +358,7 @@ function updateSaveData(...dataset) {
     localStorage.setItem(appName, JSON.stringify(lsData));
 }
 
-function getSaveData(name) {
+function getSaveData(name)  {
     const lsData = JSON.parse(localStorage.getItem(appName));
     return lsData[name] || false;
 }
