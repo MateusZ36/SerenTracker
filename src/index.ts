@@ -14,6 +14,7 @@ import "./icon.png";
 
 const itemList = document.querySelector(".itemList");
 const chatSelector = document.querySelector(".chat");
+const discordWebhookInput = document.querySelector(".discordWebhook");
 const exportButton = document.querySelector(".export");
 const clearButton = document.querySelector(".clear");
 const listHeader = document.querySelector(".header") as HTMLElement;
@@ -58,6 +59,15 @@ window.setTimeout(function () {
 				showSelectedChat(reader.pos);
 				updateSaveData({ chat: this.value });
 				this.value = "";
+			});
+
+			discordWebhookInput.addEventListener("change", function (event:KeyboardEvent) {
+				if (this.value.trim() == "") {
+					updateSaveData({ discordWebhook: null });
+				} else {
+					updateSaveData({ discordWebhook: this.value });
+				}
+
 			});
 
 			if (getSaveData("chat")) {
@@ -116,7 +126,6 @@ function readChatbox() {
 				item: item[1].trim(),
 				time: new Date(),
 			};
-			console.log(getItem);
 			updateSaveData({ data: getItem });
 			updateChatHistory(chatLine);
 			checkAnnounce(getItem);
