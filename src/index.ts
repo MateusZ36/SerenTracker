@@ -180,7 +180,7 @@ function isInHistory(chatLine) {
 }
 
 function showItems() {
-    itemList.querySelectorAll("li.item").forEach((el) => el.remove());
+    itemList.querySelectorAll(".item").forEach((el) => el.remove());
     itemTotal.innerHTML = getSaveData("data").length;
 
     if (getSaveData("mode") == "total") {
@@ -191,9 +191,9 @@ function showItems() {
         Object.keys(total)
             .sort()
             .forEach((item) => itemList.insertAdjacentHTML("beforeend", `<li class="list-group-item item">${item}: ${total[item]}</li>`));
-    } else {
-        listHeader.dataset.show = "total";
-        listHeader.title = "Click to show Totals";
+    } else if (getSaveData("mode") == "history") {
+        listHeader.dataset.show = "ge";
+        listHeader.title = "Click to show Grand Exchange Prices";
         listHeader.innerHTML = "Seren Item History";
         getSaveData("data")
             .slice()
@@ -204,8 +204,54 @@ function showItems() {
                     `<li class="list-group-item item" title="${new Date(item.time).toLocaleString()}">${item.item}</li>`
                 );
             });
+    } else if (getSaveData("mode") == "ge") {
+        listHeader.dataset.show = "total";
+        listHeader.title = "Click to show Item Totals";
+        listHeader.innerHTML = "Grand Exchange Prices";
+        itemList.insertAdjacentHTML(
+            "beforeend",
+            `<table class="item">
+                <thead>
+                    <th>Amount</th>
+                    <th>Item</th>
+                    <th>Price</th>
+                    <th>Total</th>
+                </thead>
+            <tbody/>
+            </table>`
+        )
+        let total = getTotal();
+        Object.keys(total).sort().forEach((item) => {
+            let price = getGEPrice(item)
+            let formattedPrice = formatPrice(price);
+
+            itemList.querySelector("tbody")?.insertAdjacentHTML(
+                "beforeend",
+                `<tr>
+                    <td>${total[item]}</td>
+                    <td>${item}</td>
+                    <td>${formattedPrice}</td>
+                    <td>${formatPrice(price * total[item])}</td>
+                </tr>`
+            );
+
+
+        });
+
     }
 }
+
+function formatPrice(price: number): string {
+    if (price > 1_000_000_000) {
+        return `${(price / 1_000_000_000).toFixed(1)}B`;
+    } else if (price > 1_000_000) {
+        return `${(price / 1_000_000).toFixed(1)}M`;
+    } else if (price > 1_000) {
+        return `${(price / 1_000).toFixed(1)}K`;
+    }
+    return price.toString();
+}
+
 
 function getGEPrice(itemName: string): number {
     const geData = getSaveData("GE_DATA");
