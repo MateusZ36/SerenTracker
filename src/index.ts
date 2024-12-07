@@ -138,15 +138,16 @@ function readChatbox() {
         }
         if (chatLine.indexOf("Seren spirit gifts you") > -1) {
             chatLine = correctCommonMistakes(chatLine);
-            let item = chatLine.match(/\[\d+:\d+:\d+] The Seren spirit gifts you: (\d+ x [A-Za-z\s-&+'()1-4]+)/);
-
-            let getItem = {
-                item: item[1].trim(),
+            let l = chatLine.match(/\[\d+:\d+:\d+] The Seren spirit gifts you: (\d+ x [A-Za-z\s-&+'()1-4]+)/)[1];
+            l = l.split(" x ");
+            let item: Item = {
+                name: l[1].trim(),
+                amount: parseInt(l[0].trim()),
                 time: new Date(),
             };
-            updateSaveData({data: getItem});
+            updateSaveData({data: item});
             updateChatHistory(chatLine);
-            checkAnnounce(getItem);
+            checkAnnounce(item);
             showItems();
         }
     }
@@ -198,7 +199,9 @@ function showItems() {
             .map((item) => {
                 itemList.insertAdjacentHTML(
                     "beforeend",
-                    `<li class="list-group-item item" title="${new Date(item.time).toLocaleString()}">${item.item}</li>`
+                    `<li class="list-group-item item" title="${new Date(item.time).toLocaleString()}">
+                        ${item.amount} x ${item.name}
+                    </li>`
                 );
             });
     } else if (getSaveData("mode") == "ge") {
@@ -255,7 +258,7 @@ function getGEPrice(itemName: string): number {
     return geData[itemName] || 0;
 }
 
-function checkAnnounce(getItem) {
+function checkAnnounce(item: Item) {
     if (getSaveData("discordWebhook")) {
         fetch(getSaveData("discordWebhook"), {
             method: "POST",
@@ -264,7 +267,7 @@ function checkAnnounce(getItem) {
             },
             body: JSON.stringify({
                 username: "Zero's Seren Tracker",
-                content: `Received - ${getItem.item}`,
+                content: `Received - ${item.amount} x ${item.name}`,
             }),
         });
     }
@@ -273,31 +276,35 @@ function checkAnnounce(getItem) {
 //Function to determine the total of all items recorded.
 function getTotal() {
     let total = {};
-    getSaveData("data").forEach((item) => {
-        let data = item.item.split(" x ");
-        total[data[1]] = parseInt(total[data[1]]) + parseInt(data[0]) || parseInt(data[0]);
+    getSaveData("data").forEach((item:Item) => {
+        total[item.name] = parseInt(total[item.name]) + item.amount || item.amount;
     });
     return total;
 }
 
 exportButton.addEventListener("click", function () {
     var str, fileName;
-    //If totals is checked, export totals
     if (getSaveData("mode") == "total") {
-        str = "Qty,Item\n";
+        str = "Qty;Item\n";
         let total = getTotal();
         Object.keys(total)
             .sort()
-            .forEach((item) => (str = `${str}${total[item]},${item}\n`));
+            .forEach((item) => (str = `${str}${total[item]};${item}\n`));
         fileName = "serenTotalExport.csv";
-
-        //Otherwise, export list by item and time received.
-    } else {
-        str = "Item,Time\n"; // column headers
+    } else if (getSaveData("mode") == "history") {
+        str = "Time;Item;Amount\n"; // column headers
         getSaveData("data").forEach((item) => {
-            str = `${str}${item.item},${new Date(item.time).toLocaleString()}\n`;
+            str = `${str}${new Date(item.time).toISOString()};${item.name};${item.amount}\n`;
         });
         fileName = "serenHistoryExport.csv";
+    } else if (getSaveData("mode") == "ge") {
+        str = "Amount;Item;Price;Total\n";
+        let total = getTotal();
+        Object.keys(total).sort().forEach((item) => {
+            let price = getGEPrice(item);
+            str = `${str}${total[item]};${item};${price};${price*total[item]}\n`;
+        })
+        fileName = "serenGEExport.csv";
     }
     var blob = new Blob([str], {type: "text/csv;charset=utf-8;"});
     var link = document.createElement("a");
