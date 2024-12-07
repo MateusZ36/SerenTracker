@@ -90,12 +90,6 @@ window.setTimeout(function () {
 }, 50);
 
 async function updateGEPrices() {
-    const ge_data = getSaveData("GE_DATA") || {};
-
-    if (ge_data["LAST_UPDATE"] && (new Date().getTime() - new Date(ge_data["LAST_UPDATE"]).getTime()) > 3600000) {
-        return
-    }
-
     try {
         const response = await fetch("https://runescape.wiki/?title=Module:GEPrices/data.json&action=raw&ctype=application%2Fjson");
         if (!response.ok) {
