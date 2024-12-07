@@ -20,7 +20,7 @@ const clearButton = document.querySelector(".clear");
 const listHeader = document.querySelector(".header") as HTMLElement;
 const itemTotal = document.getElementById("total");
 const appColor = a1lib.mixColor(0, 255, 255);
-const timestampRegex = /\[\d{2}:\d{2}:\d{2}\]/g;
+const timestampRegex = /\[\d{2}:\d{2}:\d{2}]/g;
 const reader = new ChatboxReader();
 const appName = "SerenTracker";
 
@@ -63,13 +63,12 @@ window.setTimeout(function () {
                 this.value = "";
             });
 
-            discordWebhookInput.addEventListener("change", function (event: KeyboardEvent) {
+            discordWebhookInput.addEventListener("blur", function () {
                 if (this.value.trim() == "") {
                     updateSaveData({discordWebhook: null});
                 } else {
                     updateSaveData({discordWebhook: this.value});
                 }
-
             });
 
             if (getSaveData("chat")) {
@@ -93,7 +92,8 @@ async function updateGEPrices() {
     try {
         const response = await fetch("https://runescape.wiki/?title=Module:GEPrices/data.json&action=raw&ctype=application%2Fjson");
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            console.error(`HTTP error! status: ${response.status}`);
+            return;
         }
         const data = await response.json();
         updateSaveData({GE_DATA: data});
@@ -135,7 +135,8 @@ function readChatbox() {
             continue;
         }
         if (chatLine.indexOf("Seren spirit gifts you") > -1) {
-            let item = chatLine.match(/\[\d+:\d+:\d+\] The Seren spirit gifts you: (\d+ x [A-Za-z\s-&+'()1-4]+)/);
+            chatLine = correctCommonMistakes(chatLine);
+            let item = chatLine.match(/\[\d+:\d+:\d+] The Seren spirit gifts you: (\d+ x [A-Za-z\s-&+'()1-4]+)/);
 
             let getItem = {
                 item: item[1].trim(),
@@ -261,7 +262,7 @@ function checkAnnounce(getItem) {
             },
             body: JSON.stringify({
                 username: "Zero's Seren Tracker",
-                content: `${new Date(getItem.time).toLocaleString()}: Received - ${getItem.item}`,
+                content: `Received - ${getItem.item}`,
             }),
         });
     }
@@ -332,17 +333,19 @@ function showSelectedChat(chat) {
     }
 }
 
-/*
-TODO:
-- New Save Data format - DONE
-	- appName - Object that contains all specific values for app
-		- data - Tracked Items
-		- chat - Selected Chat Window
-		- total - Rename to mode - Selected data display mode.
-- Convert existing data into new format - DONE
-- Continue to tidy code, create pure functions, etc.
-- Look into only keeping the relavent SerenSpirit line in chatHistory. - DONE
-*/
+function correctCommonMistakes(chatLine: string): string {
+    const corrections = [
+        {
+            pattern: /\bhaif\b/g, replacement: 'half',
+        },
+    ];
+
+    corrections.forEach(correction => {
+        chatLine = chatLine.replace(correction.pattern, correction.replacement);
+    });
+
+    return chatLine;
+}
 
 (function () {
     // Fresh install, initialize Save Data
