@@ -350,9 +350,8 @@ function showSelectedChat(chat) {
 
 function correctCommonMistakes(chatLine: string): string {
     const corrections = [
-        {
-            pattern: /\bhaif\b/g, replacement: 'half',
-        },
+        {pattern: /\bhaif\b/g, replacement: 'half'},
+        {pattern: /\bCataiytic\b/g, replacement: 'Catalytic'},
     ];
 
     corrections.forEach(correction => {
