@@ -63,6 +63,8 @@ window.setTimeout(function () {
                 this.value = "";
             });
 
+            discordWebhookInput.setAttribute("value", getSaveData("discordWebhook") || "")
+
             discordWebhookInput.addEventListener("blur", function () {
                 if (this.value.trim() == "") {
                     updateSaveData({discordWebhook: null});
@@ -315,7 +317,13 @@ exportButton.addEventListener("click", function () {
 // Factory Reset logic
 clearButton.addEventListener("click", function () {
     localStorage.removeItem(appName);
-    localStorage.setItem(appName, JSON.stringify({chat: 0, data: [], mode: "history"}));
+    localStorage.setItem(appName, JSON.stringify({
+        chat: 0,
+        data: [],
+        mode: "history",
+        discordWebhook: null,
+        GE_DATA: null,
+    }));
     location.reload();
 });
 
