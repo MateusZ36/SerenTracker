@@ -258,16 +258,37 @@ function getGEPrice(itemName: string): number {
     return geData[itemName] || 0;
 }
 
+function formatItemNameToURL(itemName: string): string {
+    return itemName.replace(/ /g, "_");
+}
+
 function checkAnnounce(item: Item) {
     if (getSaveData("discordWebhook")) {
+        let total = getTotal()[item.name];
+        let unitPrice = formatPrice(getGEPrice(item.name))
         fetch(getSaveData("discordWebhook"), {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                username: "Zero's Seren Tracker",
-                content: `Received - ${item.amount} x ${item.name}`,
+                "embeds": [
+                    {
+                        "title": `Collected ${item.amount} x ${item.name}`,
+                        "description": `Total of ${total}`,
+                        "color": 6316128,
+                        "fields": [],
+                        "thumbnail": {
+                            "url": `https://runescape.wiki/images/${formatItemNameToURL(item.name)}.png`
+                        },
+                        "footer": {
+                            "icon_url": "https://runescape.wiki/images/Coins_10000.png",
+                            "text": `${unitPrice} (unit)`
+                        }
+                    }
+                ],
+                "username": "Seren Spirit Tracker",
+                "avatar_url": "https://runescape.wiki/images/Seren_spirit.png"
             }),
         });
     }
