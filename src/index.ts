@@ -259,6 +259,18 @@ function getGEPrice(itemName: string): number {
 }
 
 function formatItemNameToURL(itemName: string): string {
+    let itemsList = {
+        "Rune arrowheads": "Rune_arrowheads_5",
+        "Magic seed": "Magic_seed_5",
+        "Onyx bolt tips": "Onyx_bolt_tips_5",
+        "Ciku seed": "Ciku_seed_5",
+        "Golden dragonfruit seed": "Golden_dragonfruit_seed_5",
+    }
+
+    let name = itemsList[itemName]
+    if (name) {
+        return name;
+    }
     return itemName.replace(/ /g, "_");
 }
 
